@@ -32,7 +32,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 0.10000000149011612
+      Cell Size: 0.009999999776482582
       Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -46,7 +46,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 300
       Reference Frame: <Fixed Frame>
       Value: true
     - Angle Tolerance: 0.05000000074505806
@@ -100,12 +100,12 @@ Visualization Manager:
         Value: /camera/image_raw
       Value: false
       Visibility:
-        "": true
         Grid: true
         LaserScan: true
         Map: true
         Odometry: true
         Path: true
+        PoseArray: true
         TF: true
         Value: true
       Zoom Factor: 1
@@ -179,7 +179,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 200
       Name: Odometry
       Position Tolerance: 0.004999999888241291
@@ -199,307 +199,21 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /odom
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        accelerometer:
-          Value: true
-        appearance:
-          Value: true
-        appearance_10:
-          Value: true
-        appearance_12:
-          Value: true
-        appearance_14:
-          Value: true
-        appearance_2:
-          Value: true
-        appearance_4:
-          Value: true
-        appearance_6:
-          Value: true
-        appearance_8:
-          Value: true
-        base_footprint:
-          Value: true
-        base_link:
-          Value: true
-        camera:
-          Value: true
-        cap screw:
-          Value: true
-        cap screw(0):
-          Value: true
-        cap screw(1):
-          Value: true
-        emitter:
-          Value: true
-        gyro:
-          Value: true
-        laser_scanner:
-          Value: true
-        led0:
-          Value: false
-        led1:
-          Value: false
-        led2:
-          Value: false
-        led3:
-          Value: false
-        led4:
-          Value: false
-        led5:
-          Value: false
-        led6:
-          Value: false
-        led7:
-          Value: false
-        led8:
-          Value: false
-        led9:
-          Value: false
-        left wheel:
-          Value: true
-        ls0:
-          Value: true
-        ls1:
-          Value: true
-        ls2:
-          Value: true
-        ls3:
-          Value: true
-        ls4:
-          Value: true
-        ls5:
-          Value: true
-        ls6:
-          Value: true
-        ls7:
-          Value: true
-        map:
-          Value: true
-        odom:
-          Value: true
-        pi-puck:
-          Value: true
-        pi-puck led 0:
-          Value: false
-        pi-puck led 1:
-          Value: false
-        pi-puck led 2:
-          Value: false
-        pipe:
-          Value: false
-        ps0:
-          Value: true
-        ps0_13:
-          Value: true
-        ps1:
-          Value: true
-        ps1_11:
-          Value: true
-        ps2:
-          Value: true
-        ps2_9:
-          Value: true
-        ps3:
-          Value: true
-        ps3_7:
-          Value: true
-        ps4:
-          Value: true
-        ps4_5:
-          Value: true
-        ps5:
-          Value: true
-        ps5_3:
-          Value: true
-        ps6:
-          Value: true
-        ps6_1:
-          Value: true
-        ps7:
-          Value: true
-        ps7_0:
-          Value: true
-        receiver:
-          Value: true
-        right wheel:
-          Value: true
-        solid:
-          Value: true
-        speaker:
-          Value: true
-        tof:
-          Value: true
       Marker Scale: 0.10000000149011612
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
       Tree:
-        map:
-          odom:
-            base_link:
-              accelerometer:
-                {}
-              base_footprint:
-                {}
-              camera:
-                {}
-              emitter:
-                {}
-              gyro:
-                {}
-              laser_scanner:
-                {}
-              led0:
-                {}
-              led1:
-                {}
-              led2:
-                {}
-              led3:
-                {}
-              led4:
-                {}
-              led5:
-                {}
-              led6:
-                {}
-              led7:
-                {}
-              led8:
-                {}
-              led9:
-                {}
-              left wheel:
-                {}
-              ls0:
-                {}
-              ls1:
-                {}
-              ls2:
-                {}
-              ls3:
-                {}
-              ls4:
-                {}
-              ls5:
-                {}
-              ls6:
-                {}
-              ls7:
-                {}
-              pi-puck:
-                cap screw:
-                  {}
-                cap screw(0):
-                  {}
-                cap screw(1):
-                  {}
-                pi-puck led 0:
-                  {}
-                pi-puck led 1:
-                  {}
-                pi-puck led 2:
-                  {}
-                solid:
-                  {}
-              pipe:
-                {}
-              ps0:
-                ps0_13:
-                  appearance_14:
-                    {}
-              ps1:
-                ps1_11:
-                  appearance_12:
-                    {}
-              ps2:
-                ps2_9:
-                  appearance_10:
-                    {}
-              ps3:
-                ps3_7:
-                  appearance_8:
-                    {}
-              ps4:
-                ps4_5:
-                  appearance_6:
-                    {}
-              ps5:
-                ps5_3:
-                  appearance_4:
-                    {}
-              ps6:
-                ps6_1:
-                  appearance_2:
-                    {}
-              ps7:
-                ps7_0:
-                  appearance:
-                    {}
-              receiver:
-                {}
-              right wheel:
-                {}
-              speaker:
-                {}
-              tof:
-                {}
+        {}
       Update Interval: 0
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz_default_plugins/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /received_global_plan
-      Value: true
-    - Alpha: 1
-      Arrow Length: 0.07000000029802322
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.009999999776482582
-      Class: rviz_default_plugins/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.07000000029802322
-      Head Radius: 0.029999999329447746
-      Name: PoseArray
-      Shaft Length: 0.23000000417232513
-      Shaft Radius: 0.009999999776482582
-      Shape: Arrow (Flat)
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /particlecloud
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -525,8 +239,82 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /motion_model_path
+        Value: /received_global_plan
       Value: false
+    - Alpha: 1
+      Arrow Length: 0.03500000014901161
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz_default_plugins/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /particlecloud
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 32; 74; 135
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mcl_path
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 204; 0; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /odom_path
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -557,7 +345,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4.582430839538574
+      Distance: 4.108147621154785
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

@@ -49,8 +49,10 @@ class MonteCarloLocalizer(Node):
                                  self.odometry_callback, 1)
         self.create_subscription(LaserScan, '/scan',
                                  self.scan_callback, 1)
-        self._motion_path = Path()
-        self._motion_path_pub = self.create_publisher(Path, '/motion_model_path', 10)
+        self._mcl_path = Path()
+        self._odom_path = Path()
+        self._mcl_path_pub = self.create_publisher(Path, '/mcl_path', 10)
+        self._odom_path_pub = self.create_publisher(Path, '/odom_path', 10)
         self._particle_pub = self.create_publisher(PoseArray, '/particlecloud', 10)
         self.create_timer(100 * MILLISECONDS, self.timer_callback)
         self._particles: List[Particle] = []
@@ -264,15 +266,25 @@ class MonteCarloLocalizer(Node):
         msg.data = map
         self._map_publisher.publish(msg)
 
-    def _publish_motion_path(self, published_pose: Pose):
+    def _publish_mcl_path(self, published_pose: Pose):
         stamp = self.get_clock().now().to_msg()
-        self._motion_path.header.frame_id = 'map'
-        self._motion_path.header.stamp = stamp
+        self._mcl_path.header.frame_id = 'map'
+        self._mcl_path.header.stamp = stamp
         pose = PoseStamped()
-        pose.header = self._motion_path.header
+        pose.header = self._mcl_path.header
         pose.pose = published_pose
-        self._motion_path.poses.append(pose)
-        self._motion_path_pub.publish(self._motion_path)
+        self._mcl_path.poses.append(pose)
+        self._mcl_path_pub.publish(self._mcl_path)
+
+    def _publish_odom_path(self, odom_pose: Pose):
+        stamp = self.get_clock().now().to_msg()
+        self._odom_path.header.frame_id = 'odom'
+        self._odom_path.header.stamp = stamp
+        pose = PoseStamped()
+        pose.header = self._odom_path.header
+        pose.pose = odom_pose
+        self._odom_path.poses.append(pose)
+        self._odom_path_pub.publish(self._odom_path)
 
     def _update_adaptive(self):
         if self._last_odom == self._last_used_odom:
@@ -317,7 +329,8 @@ class MonteCarloLocalizer(Node):
         self._particles.clear()
         self._particles = self._normalize_particles(new_particles, self.get_logger())
         self._current_pose = self._pose_estimate(self._particles)
-        self._publish_motion_path(self._current_pose)
+        self._publish_mcl_path(self._current_pose)
+        self._publish_odom_path(self._last_odom)
         self._updating = False
 
     def _update(self):
@@ -339,7 +352,8 @@ class MonteCarloLocalizer(Node):
         self._particles.clear()
         self._particles = self._normalize_particles(new_particles, self.get_logger())
         self._current_pose = self._pose_estimate(self._particles)
-        self._publish_motion_path(self._current_pose)
+        self._publish_mcl_path(self._current_pose)
+        self._publish_odom_path(self._last_odom)
 
         if self._should_resample(self._particles, self._mcl_cfg['num_of_particles'] / 5.0):
             self._particles = self._resample(self._particles)
