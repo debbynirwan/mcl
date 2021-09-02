@@ -1,0 +1,7 @@
+adaptive: true
+likelihood_model: true
+num_of_particles: 1000
+epsilon: 0.1
+upper_quantile: 3
+min_number_of_particles: 50
+max_number_of_particles: 1000
