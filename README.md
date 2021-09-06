@@ -50,7 +50,7 @@ max_number_of_particles
 Webots ROS2 package
 
 ## Documentation
-If you're interested in understanding the details, please read my post [here](tbd)
+If you're interested in understanding the details, please read my post [here](https://towardsdatascience.com/particle-filter-localization-with-webots-and-ros2-619ecf0c5f08)
 
 ## Issues
 Please report issues if you found bugs or raise a Pull Request.
