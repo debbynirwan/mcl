@@ -21,7 +21,7 @@ def generate_launch_description():
 
     webots_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(package_dir, 'robot_launch.py')
+            os.path.join(package_dir,'launch', 'robot_launch.py')
         ),
         launch_arguments={
             'synchronization': synchronization,
