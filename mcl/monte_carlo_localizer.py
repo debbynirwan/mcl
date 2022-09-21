@@ -18,66 +18,118 @@ import yaml
 import os
 import numpy as np
 
+from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Pose                          # http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Pose.html
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseArray
+
+from nav_msgs.msg import Odometry
+from nav_msgs.msg import Path                               # http://docs.ros.org/en/melodic/api/nav_msgs/html/msg/Path.html
+from nav_msgs.msg import OccupancyGrid
+
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
-from geometry_msgs.msg import Quaternion, Pose, Point, PoseStamped, PoseArray
-from nav_msgs.msg import Odometry, Path, OccupancyGrid
+
 from sensor_msgs.msg import LaserScan
 from ament_index_python.packages import get_package_share_directory
 from mcl import motion_model, util
 from math import degrees
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import StaticTransformBroadcaster
-from mcl.sensor_model import Map, LikelihoodFields, BeamModel
+
+from mcl.sensor_model import Map
+from mcl.sensor_model import LikelihoodFields
+from mcl.sensor_model import BeamModel
+
 from typing import List
 
 MILLISECONDS = 0.001
 ALMOST_ZERO = 1e-15
 
 
+# Partcile model
 class Particle:
+    """
+    A class used to represent a partcile used to estimate robot pose
+
+    ...
+
+    Attributes
+    ----------
+    pose : Pose
+        a pose estimation for the particle
+    weight : float
+        probability that the particle represents the true pose
+
+    """
     def __init__(self, pose: Pose, weight: float):
         self.pose: Pose = pose
-        self.weight: float = weight
+        self.weight: float = weight 
 
 
 class MonteCarloLocalizer(Node):
 
+    """
+    Monte carlo particle filter ros node used to estimate pose of differential robot
+
+    ...
+
+    Attributes
+    ----------
+    pose : Pose
+        a pose estimation for the particle
+    weight : float
+        probability that the particle represents the true pose
+
+    """
+
     def __init__(self):
+ 
+        # Init ros node
         super().__init__('monte_carlo_localizer')
-        self.create_subscription(Odometry, '/odom',
-                                 self.odometry_callback, 1)
-        self.create_subscription(LaserScan, '/scan',
-                                 self.scan_callback, 1)
+
+        # Create subscriptions
+        self.create_subscription(Odometry, '/odom',self.odometry_callback, 1)
+        self.create_subscription(LaserScan, '/scan',self.scan_callback, 1)
+
+        # Create path variables (list of poses over time)
         self._mcl_path = Path()
         self._odom_path = Path()
+
+        # Create publishers
         self._mcl_path_pub = self.create_publisher(Path, '/mcl_path', 10)
         self._odom_path_pub = self.create_publisher(Path, '/odom_path', 10)
         self._particle_pub = self.create_publisher(PoseArray, '/particlecloud', 10)
+
         self.create_timer(100 * MILLISECONDS, self.timer_callback)
         self._particles: List[Particle] = []
 
+        # Variable declaration
         self._last_used_odom: Pose = None
         self._last_odom: Pose = None
         self._current_pose: Pose = None
-        self._motion_model_cfg = None
-        self._mcl_cfg = None
+        self._motion_model_cfg = None               # motion model configuration
+        self._mcl_cfg = None                        # monte carlo configuration
         self._last_scan: LaserScan = None
         self._updating = False
 
+        # Load motion model configuration
         package_dir = get_package_share_directory('mcl')
         motion_model_cfg_file = 'resource/motion_model.yaml'
         with open(os.path.join(package_dir, motion_model_cfg_file)) as cfg_file:
             self._motion_model_cfg = yaml.load(cfg_file, Loader=yaml.FullLoader)
         if self._motion_model_cfg is None:
             raise RuntimeError(f"{motion_model_cfg_file} not found")
-
+        
+        # Load monte carlo configuration
         mcl_cfg_file = 'resource/mcl.yaml'
         with open(os.path.join(package_dir, mcl_cfg_file)) as cfg_file:
             self._mcl_cfg = yaml.load(cfg_file, Loader=yaml.FullLoader)
         if self._mcl_cfg is None:
             raise RuntimeError(f"{mcl_cfg_file} not found")
-
+        
+        # Load epock world map
         self._map = Map('resource/epuck_world_map.yaml', self.get_logger())
         if self._mcl_cfg['likelihood_model']:
             self._sensor_model = LikelihoodFields(self._map)
@@ -93,8 +145,8 @@ class MonteCarloLocalizer(Node):
             )
         )
 
-        self._initialize_pose()
-        self._initialize_particles_gaussian()
+        self._initialize_pose()                     # Initialise ground truth pose
+        self._initialize_particles_uniform()       # Populate the particle filter
 
         self._tf_publisher = StaticTransformBroadcaster(self)
         tf = TransformStamped()
@@ -125,21 +177,52 @@ class MonteCarloLocalizer(Node):
             self._last_scan = msg
 
     def _initialize_pose(self):
-        position = Point(x=0.0,
-                         y=0.0,
-                         z=0.0)
+        """ Initialise pose of the robot (ground truth)"""
+
+        position = Point(x=0.0,y=0.0,z=0.0)
         orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=0.0)
-        self._current_pose = Pose(position=position,
-                                  orientation=orientation)
+        self._current_pose = Pose(position=position, orientation=orientation)
+
         self._last_used_odom = self._current_pose
         self._last_odom = self._current_pose
 
     def _initialize_particles_gaussian(self, pose: Pose = None, scale: float = 0.05):
+        """ Initialise particles from a Gaussian distribution centered on the robot
+
+        If pose is None, this indicates the particles are being initialised for the first time        
+        """
+
         if pose is None:
             pose = self._current_pose
 
         x_list = list(np.random.normal(loc=pose.position.x, scale=scale, size=self._mcl_cfg['num_of_particles'] - 1))
         y_list = list(np.random.normal(loc=pose.position.y, scale=scale, size=self._mcl_cfg['num_of_particles'] - 1))
+        current_yaw = util.yaw_from_quaternion(pose.orientation)
+        yaw_list = list(np.random.normal(loc=current_yaw, scale=0.01, size=self._mcl_cfg['num_of_particles'] - 1))
+
+        initial_weight = 1.0 / float(self._mcl_cfg['num_of_particles'])
+
+        for x, y, yaw in zip(x_list, y_list, yaw_list):
+            position = Point(x=x, y=y, z=0.0)
+            orientation = util.euler_to_quaternion(yaw, 0.0, 0.0)
+            temp_pose = Pose(position=position, orientation=orientation)
+            self._particles.append(Particle(temp_pose, initial_weight))
+
+        self._particles.append(Particle(pose, initial_weight))
+
+    def _initialize_particles_uniform(self, pose: Pose = None):
+        """ Initialise particles from a Uniform distribution centered on the robot extending towards extremeties of the map
+
+        If pose is None, this indicates the particles are being initialised for the first time        
+        """
+
+        if pose is None:
+            pose = self._current_pose
+
+        # Sample from uniform distribution for initial x and y positions
+        x_list = list(np.random.uniform(low=-1.5, high=1.5,size=self._mcl_cfg['num_of_particles'] - 1))
+        y_list = list(np.random.uniform(low=-1.5, high=1.5,size=self._mcl_cfg['num_of_particles'] - 1))
+
         current_yaw = util.yaw_from_quaternion(pose.orientation)
         yaw_list = list(np.random.normal(loc=current_yaw, scale=0.01, size=self._mcl_cfg['num_of_particles'] - 1))
 

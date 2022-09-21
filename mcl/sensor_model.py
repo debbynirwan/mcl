@@ -269,6 +269,19 @@ class BeamModel:
 
 
 class LikelihoodFields:
+    """
+    A class used to represent likehood of particle pose given sensor readings
+
+    ...
+
+    Attributes
+    ----------
+    pose : Pose
+        a pose estimation for the particle
+    weight : float
+        probability that the particle represents the true pose
+
+    """
     def __init__(self, map: Map):
         self._map = map
         self._object_list: List[LocationAndIndex] = self._find_objects()
