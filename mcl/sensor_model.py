@@ -294,59 +294,110 @@ class LikelihoodFields:
         self._std_dev = self._sensor_cfg['likelihood_std_dev']
 
     def _find_objects(self):
+        """ Scan through the map and mark obstacles
+
+        An item in the map is regarded as an obstacle if it excedes [self._map.occupied_thresh]         
+        """
+
+        # Create list of objecst
         object_index_list = []
+
+        # Iterate through x and y cooridinates
         for x in range(self._map.width):
             for y in range(self._map.height):
+
+                # index of grid
                 index = y * self._map.width + x
+
+                # Make sure not to iterate past the numebr of datapoints avaiable in the map
                 if index >= len(self._map.data) or index < -len(self._map.data):
                     continue
+                
+                # Mark that there is an object if the the reading exceeds the threshhold
                 if self._map.data[index] >= self._map.occupied_thresh:
                     object_index_list.append(LocationAndIndex(x, y, index))
+
+        # Return list of objects    
         return object_index_list
 
     def _closest_object_dist(self, x, y):
+        """ Find closest distance to nearby object
+        """
+
+        # Define initial distance as max
         dist = sys.float_info.max
+
+        # Iterate throough object list
         for object in self._object_list:
             current_dist = sqrt(((object.x - x) ** 2) + ((object.y - y) ** 2))
             if current_dist < dist:
                 dist = current_dist
+
         return dist
 
     def update(self, scan: LaserScan, pose: Pose):
+        """Perform update for particle
+        
+        Return probability
+        """
+
+        # If no scan is availibility
         if scan is None:
             return 1.0
 
+        # Set probability
         prob = 1.0
         pose_in_map = self._map_pose(pose)
 
+        # Angle of the sensor
         sensor_angle = scan.angle_min
+
+        # Iterate through ranges in the laser scan
         for laser_range in scan.ranges:
+
+            # Only account for distances within the threshhold
             if laser_range < scan.range_max and laser_range > scan.range_min:
+                
+                # Project point to world frame
                 range_angle = pose_in_map.yaw + sensor_angle
                 range_x = pose_in_map.x + laser_range * cos(range_angle)
                 range_y = pose_in_map.y + laser_range * sin(range_angle)
+
+                # Ensure we remain within the bounds of the map
                 if range_x >= self._map.width * self._map.resolution:
                     range_x = (self._map.width - 1) * self._map.resolution
                 if range_y >= self._map.height * self._map.resolution:
                     range_y = (self._map.height - 1) * self._map.resolution
-                dist = self._closest_object_dist(int(range_x / self._map.resolution),
-                                                 int(range_y / self._map.resolution))
+
+                # Get the closest object distance
+                dist = self._closest_object_dist(int(range_x / self._map.resolution), int(range_y / self._map.resolution))
+
+                # Determine the probability                                 
                 phit = self._get_prob(dist * self._map.resolution)
                 prob *= phit
+
             sensor_angle += scan.angle_increment
 
         return prob
 
     def _get_prob(self, dist: float) -> tuple:
+
+        # Evaluate guassian with std of [self._std_dev] at [dist]
         probability = norm(scale=self._std_dev).pdf(dist)
+        
+        # Limit the probability
         if probability >= 1.0:
             probability = 1.0
+
         return probability
 
     def _map_pose(self, pose: Pose) -> SimplePose:
+
         x = pose.position.x
         y = pose.position.y
+
         yaw = util.yaw_from_quaternion(pose.orientation)
         map_x, map_y = util.location_in_map_meter(x, y, self._map)
         map_yaw = yaw
+
         return SimplePose(map_x, map_y, map_yaw)

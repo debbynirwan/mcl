@@ -146,8 +146,9 @@ class MonteCarloLocalizer(Node):
         )
 
         self._initialize_pose()                     # Initialise ground truth pose
-        self._initialize_particles_uniform()       # Populate the particle filter
+        self._initialize_particles_uniform()        # Populate the particle filter
 
+        # Transform publisher
         self._tf_publisher = StaticTransformBroadcaster(self)
         tf = TransformStamped()
         tf.header.stamp = self.get_clock().now().to_msg()
@@ -160,11 +161,22 @@ class MonteCarloLocalizer(Node):
         self._publish_map()
 
     def timer_callback(self):
+        """ Callback for timer
+
+        Performs particle update step. If the filter has been set as adaptive, it will adjust the number
+        of particles sampled by the particle filter.
+        """
+
+        # Check if _last_used_odom and _last_odom are initialised
         if self._last_used_odom and self._last_odom:
+            
+            # Perform particle update
             if self._mcl_cfg['adaptive']:
                 self._update_adaptive()
             else:
-                self._update()
+                self._update()  # perform particle update
+
+            # Publish particles    
             self._publish_particles()
             self._last_used_odom = self._last_odom
 
@@ -224,16 +236,19 @@ class MonteCarloLocalizer(Node):
         y_list = list(np.random.uniform(low=-1.5, high=1.5,size=self._mcl_cfg['num_of_particles'] - 1))
 
         current_yaw = util.yaw_from_quaternion(pose.orientation)
-        yaw_list = list(np.random.normal(loc=current_yaw, scale=0.01, size=self._mcl_cfg['num_of_particles'] - 1))
-
+        yaw_list = list(np.random.uniform(low=-np.pi,high=np.pi, size=self._mcl_cfg['num_of_particles'] - 1))
+        
+        # Initalise weights, cummulative propoabilty should equal 1!
         initial_weight = 1.0 / float(self._mcl_cfg['num_of_particles'])
 
+        # Initialize the particles
         for x, y, yaw in zip(x_list, y_list, yaw_list):
             position = Point(x=x, y=y, z=0.0)
             orientation = util.euler_to_quaternion(yaw, 0.0, 0.0)
             temp_pose = Pose(position=position, orientation=orientation)
             self._particles.append(Particle(temp_pose, initial_weight))
 
+        # Append the particle !
         self._particles.append(Particle(pose, initial_weight))
 
     def _normalize_particles(self, particles: List[Particle], log):
@@ -417,12 +432,18 @@ class MonteCarloLocalizer(Node):
         self._updating = False
 
     def _update(self):
+        """ Perform particle filter update and resample steps
+        """
+
+        # Do not run if uninitialised
         if self._last_odom == self._last_used_odom:
             return
 
+        # Cool
         self._updating = True
         new_particles = []
 
+        # Iterate through particles and perform update step and get probability based on scan
         for particle in self._particles:
             current_pose = particle.pose
             predicted_pose = motion_model.sample_odom_motion_model(current_pose,
@@ -431,13 +452,19 @@ class MonteCarloLocalizer(Node):
                                                                    self._motion_model_cfg)
             prob = self._sensor_model.update(self._last_scan, predicted_pose)
             new_particles.append(Particle(predicted_pose, prob))
+        
+        # We have now created a new particle set with new probabilities assigned according to the sensor readings and predicted pose
 
+        # Normalise the weights of the new particle
         self._particles.clear()
         self._particles = self._normalize_particles(new_particles, self.get_logger())
+
+        # Estimate the pose and publish the new paths
         self._current_pose = self._pose_estimate(self._particles)
         self._publish_mcl_path(self._current_pose)
         self._publish_odom_path(self._last_odom)
 
+        # Determine if we should resample and resample if neccessary
         if self._should_resample(self._particles, self._mcl_cfg['num_of_particles'] / 5.0):
             self._particles = self._resample(self._particles)
 
