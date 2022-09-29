@@ -48,6 +48,7 @@ setup(
             'random_bounce = mcl.random_bounce:main',
             'mission_controller = mcl.mission_controller:main',
             'monte_carlo_localizer = mcl.monte_carlo_localizer:main',
+            'ros_to_serial = mcl.ros_to_serial:main',
         ],
     },
 )
